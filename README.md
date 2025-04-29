@@ -10,6 +10,7 @@ $ cd cpiso
 
 ```bash
 $ sudo mkdir -p /usr/local/bin/
+$ chmod +x src/*
 $ sudo ln -s "$(pwd)/src/"* /usr/local/bin/
 ```
 
@@ -17,6 +18,8 @@ $ sudo ln -s "$(pwd)/src/"* /usr/local/bin/
 
 The `cpiso` script is a frontend using and writing logs of `cpiso_base` and ejecting the drive.
 `cpiso_check` is for checking the quality of an existing log file.
+
+## Copying a disc
 
 ```bash
 $ cpiso /dev/sr0 output/path
@@ -43,5 +46,5 @@ $ cpiso_check LABEL
 
 # Future
 
-Adding sha265 checks to the logs could possibly be implemented.
+Adding sha256 checks to the logs could be easily implemented.
 
