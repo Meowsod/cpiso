@@ -1,0 +1,28 @@
+#!/bin/bash
+set -euxv
+echo "Process started at: $(date --iso-8601=seconds)"
+dev="$1"; dev_id="$(basename "$dev")"
+
+label=$(dd if="$dev" bs=1 skip=32808 count=32 | cut -d' ' -f1)
+iso="$label.iso"
+
+block_size=$(cat "/sys/block/$dev_id/queue/logical_block_size")
+volume=$(($(cat "/sys/block/$dev_id/size") / 4))
+
+echo "Copying $label ($((block_size * volume)) bytes)..."
+dd conv=excl if="$dev" of="$iso" bs="$block_size" count="$volume"
+
+echo "Calculating $iso md5..."
+iso_md5=$(md5sum "$iso"); echo "$iso_md5" | tee "$label.md5"
+
+echo "Calculating $dev md5..."
+dev_md5=$(dd if="$dev" bs="$block_size" | md5sum | cut -d' ' -f1); echo "$dev  $dev_md5"
+
+if [ "$(echo "$iso_md5" | cut -d' ' -f1)" != "$dev_md5" ]; then
+    >&2 echo "$iso's checksum doesn't match $dev."
+    exit 1
+fi
+echo "$iso's checksum matches $dev."
+
+echo "$label copied successfully."
+echo "Process ended at: $(date --iso-8601=seconds)"

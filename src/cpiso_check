@@ -1,0 +1,42 @@
+#!/bin/bash
+if [ -z "$1" ]; then
+	echo "Usage: cpiso_check LABEL"
+	exit 1
+fi
+
+set -eu
+
+stderr() {
+	>&2 echo "$1"
+}
+
+LOG=100
+
+# 50%
+if [ ! -f "$1.md5" ]; then
+	stderr "MD5 file missing"
+	LOG="$((LOG-50))"
+else
+	md5=$(md5sum -c "$1.md5" -w)
+	if [[ $(echo "$md5") == "$1.iso: OK" ]]; then
+		echo "MD5: OK"
+	else
+		echo "MD5: MISMATCH"
+		LOG="$((LOG-50))"
+	fi
+fi
+
+# 50%
+if [ ! -f "$1.log" ]; then
+	stderr "LOG file missing"
+	LOG="$((LOG-50))"
+else
+	if [[ $(tail -n 1 "$1.log") == "Disc copied successfully." ]]; then
+		echo "LOG: OK"
+	else
+		echo "LOG: BAD"
+		LOG="$((LOG-50))"
+	fi
+fi
+
+echo "$LOG% LOG"

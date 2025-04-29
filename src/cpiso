@@ -1,0 +1,50 @@
+#!/bin/bash
+set -e
+
+if [ -z "$1" ]; then
+	drive="$DRIVE"
+else
+	drive="$1"
+fi
+
+if [ -z "$drive" ]; then
+	echo "No drive specified! Exiting..."
+	exit 1
+fi
+
+if [ ! -b "$drive" ]; then
+	echo "$drive is not a block device! Exiting..."
+	exit 1
+fi
+
+echo "Using drive $drive"
+
+if [ -z "$2" ]; then
+	if [ -z "$DIRECTORY" ]; then
+		echo "Using current directory"
+	else
+		mkdir -p "$DIRECTORY" && cd "$DIRECTORY"
+		echo "Using $DIRECTORY"
+	fi
+else
+	mkdir -p "$2" && cd "$2"
+fi
+
+log=".ddlog-$(date +%s).tmp"
+echo "Using $log for temporary log"
+
+echo
+set +e; set -u
+
+cpiso_base "$drive" 2>&1 | tee "$log"
+printf "\ncpiso_base exited with code ${PIPESTATUS[0]}\n"
+
+mv "$log" "$(grep '^+ label=' "$log" | head -n 1 | sed 's/^+ label=//').log"
+
+set +u
+if [[ -z "$EJECT" ]]; then
+    read -p "Eject $drive (y/n)? " -n 1 -r; echo
+    [[ $REPLY =~ ^[Yy]$ ]] && eject "$drive"
+else
+    [[ "$EJECT" == "true" ]] && eject "$drive"
+fi
